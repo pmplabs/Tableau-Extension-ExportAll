@@ -2,7 +2,7 @@
   "public": false,
   "name": "Tableau-Extension-ExportAll",
   "alias": [
-    "exportallextension.theinformationlab.io"
+    "tableau-extension-export-all.vercel.app"
   ],
   "version": 2,
   "routes": [
