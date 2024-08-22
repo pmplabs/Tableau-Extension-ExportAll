@@ -9,10 +9,10 @@ import { saveAs } from 'file-saver';
 //https://stackoverflow.com/questions/5306680/move-an-array-element-from-one-array-position-to-another
 function array_move(arr, old_index, new_index) {
   if (new_index >= arr.length) {
-      var k = new_index - arr.length + 1;
-      while (k--) {
-          arr.push(undefined);
-      }
+    var k = new_index - arr.length + 1;
+    while (k--) {
+      arr.push(undefined);
+    }
   }
   arr.splice(new_index, 0, arr.splice(old_index, 1)[0]);
   return arr; // for testing
@@ -24,20 +24,20 @@ const saveSettings = () => new Promise((resolve, reject) => {
   console.log('[func.js] Authoring mode', tableau.extensions.environment.mode);
   if (tableau.extensions.environment.mode === "authoring") {
     tableau.extensions.settings.saveAsync()
-    .then(newSavedSettings => {
-      //console.log('[func.js] newSavedSettings', newSavedSettings);
-      resolve(newSavedSettings);
-    }).catch(reject);
+      .then(newSavedSettings => {
+        //console.log('[func.js] newSavedSettings', newSavedSettings);
+        resolve(newSavedSettings);
+      }).catch(reject);
   } else {
     resolve();
   }
-  
+
 });
 
 const setSettings = (type, value) => new Promise((resolve, reject) => {
   console.log('[func.js] Set settings', type, value);
   let settingKey = '';
-  switch(type) {
+  switch (type) {
     case 'sheets':
       settingKey = 'selectedSheets';
       break;
@@ -61,7 +61,7 @@ const setSettings = (type, value) => new Promise((resolve, reject) => {
 });
 
 const getSheetColumns = (sheet, existingCols, modified) => new Promise((resolve, reject) => {
-  sheet.getSummaryDataAsync({ignoreSelection: true}).then((data) => {
+  sheet.getSummaryDataAsync({ ignoreSelection: true }).then((data) => {
     //console.log('[func.js] Sheet Summary Data', data);
     console.log('[func.js] getSheetColumns existingCols', JSON.stringify(existingCols));
     const columns = data.columns;
@@ -88,7 +88,7 @@ const getSheetColumns = (sheet, existingCols, modified) => new Promise((resolve,
       cols = cols.map((col, idx) => {
         //console.log('[func.js] getSheetColumns Looking for col', col);
         const eIdx = existingIdx.indexOf(col.name);
-        const ret = {...col};
+        const ret = { ...col };
         if (eIdx > -1) {
           ret.selected = existingCols[eIdx].selected;
           ret.changeName = existingCols[eIdx].changeName;
@@ -113,9 +113,9 @@ const getSheetColumns = (sheet, existingCols, modified) => new Promise((resolve,
     cols = cols.sort((a, b) => (a.order > b.order) ? 1 : -1)
     resolve(cols);
   })
-  .catch(error => {
-    console.log('[func.js] Error with getSummaryDataAsync', sheet, error);
-  });
+    .catch(error => {
+      console.log('[func.js] Error with getSummaryDataAsync', sheet, error);
+    });
 });
 
 const initializeMeta = () => new Promise((resolve, reject) => {
@@ -207,9 +207,9 @@ const exportToExcel = (meta, env, filename) => new Promise((resolve, reject) => 
   }
   buildExcelBlob(meta).then(wb => {
     // add ignoreEC:false to prevent excel crashes during text to column
-    var wopts = { bookType:'xlsx', bookSST:false, type:'array', ignoreEC:false };
-    var wbout = XLSX.write(wb,wopts);
-    saveAs(new Blob([wbout],{type:"application/octet-stream"}), xlsFile);
+    var wopts = { bookType: 'xlsx', bookSST: false, type: 'array', ignoreEC: false };
+    var wbout = XLSX.write(wb, wopts);
+    saveAs(new Blob([wbout], { type: "application/octet-stream" }), xlsFile);
     resolve();
   });
 });
@@ -221,7 +221,7 @@ const exportToExcel = (meta, env, filename) => new Promise((resolve, reject) => 
 const buildExcelBlob = (meta) => new Promise((resolve, reject) => {
   console.log("[func.js] Got Meta", meta);
   // func.saveSettings(meta, function(newSettings) {
-    // console.log("Saved settings", newSettings);
+  // console.log("Saved settings", newSettings);
   const worksheets = tableau.extensions.dashboardContent.dashboard.worksheets;
   const wb = XLSX.utils.book_new();
   let totalSheets = 0;
@@ -229,7 +229,7 @@ const buildExcelBlob = (meta) => new Promise((resolve, reject) => {
   const sheetList = [];
   const columnList = [];
   const tabNames = [];
-  for (let i =0; i < meta.length; i++) {
+  for (let i = 0; i < meta.length; i++) {
     if (meta[i] && meta[i].selected) {
       let tabName = meta[i].changeName || meta[i].sheetName;
       tabName = tabName.replace(/[*?/\\[\]]/gi, '');
@@ -243,7 +243,7 @@ const buildExcelBlob = (meta) => new Promise((resolve, reject) => {
     //console.log("[func.js] Finding sheet", metaSheet, worksheets);
     const sheet = worksheets.find(s => s.name === metaSheet);
     // eslint-disable-next-line
-    sheet.getSummaryDataAsync({ignoreSelection: true}).then((data) => {
+    sheet.getSummaryDataAsync({ ignoreSelection: true }).then((data) => {
       const columns = data.columns;
       const columnMeta = columnList[sheetCount];
       const headerOrder = [];
@@ -257,7 +257,7 @@ const buildExcelBlob = (meta) => new Promise((resolve, reject) => {
         //console.log("[func.js] Finding column", column.fieldName, columnMeta);
         const objCol = columnMeta.find(o => o.name === column.fieldName);
         if (objCol) {
-          let col = { ...column, selected: objCol.selected  }
+          let col = { ...column, selected: objCol.selected }
           col.outputName = objCol.changeName || objCol.name;
           columns[idx] = col;
           return col;
@@ -270,14 +270,14 @@ const buildExcelBlob = (meta) => new Promise((resolve, reject) => {
         .then((rows) => {
           //console.log("[func.js] decodeRows returned", rows);
           console.log("[func.js] Header Order", headerOrder);
-          var ws = XLSX.utils.json_to_sheet(rows, {header: headerOrder});
+          var ws = XLSX.utils.json_to_sheet(rows, { header: headerOrder });
           var sheetname = tabNames[sheetCount];
           sheetCount = sheetCount + 1;
           XLSX.utils.book_append_sheet(wb, ws, sheetname);
           if (sheetCount === totalSheets) {
             resolve(wb);
           }
-      });
+        });
     });
     return sheet;
   });
@@ -288,7 +288,7 @@ const buildExcelBlob = (meta) => new Promise((resolve, reject) => {
 // and translate cell data types
 const decodeDataset = (columns, dataset) => new Promise((resolve, reject) => {
   let promises = [];
-  for (let i=0; i<dataset.length; i++) {
+  for (let i = 0; i < dataset.length; i++) {
     promises.push(decodeRow(columns, dataset[i]));
   }
   Promise.all(promises).then((datasetArr) => {
@@ -331,7 +331,7 @@ const decodeRow = (columns, row) => new Promise((resolve, reject) => {
             dval = row[j].formattedValue;
         }
       }
-      let o = {v:dval, t:dtype};
+      let o = { v: dval, t: dtype };
       meta[columns[j].outputName] = o;
     }
   }
@@ -340,10 +340,121 @@ const decodeRow = (columns, row) => new Promise((resolve, reject) => {
 
 
 
+const downloadCrosstab = (meta, filename) => new Promise((resolve, reject) => {
+  console.log('[func.js] Downloading Crosstab');
+  let xlsFile = "crosstab_export.xlsx";
+  if (filename && filename.length > 0) {
+    xlsFile = filename + ".xlsx";
+  }
+  buildCrosstabExcelBlob(meta).then(wb => {
+    var wopts = { bookType: 'xlsx', bookSST: false, type: 'array', ignoreEC: false };
+    var wbout = XLSX.write(wb, wopts);
+    saveAs(new Blob([wbout], { type: "application/octet-stream" }), xlsFile);
+    resolve();
+  }).catch(reject);
+});
+
+const buildCrosstabExcelBlob = (meta) => new Promise((resolve, reject) => {
+  console.log("[func.js] Got Meta for Crosstab", meta);
+  const worksheets = tableau.extensions.dashboardContent.dashboard.worksheets;
+  const wb = XLSX.utils.book_new();
+  let totalSheets = 0;
+  let sheetCount = 0;
+  const sheetList = [];
+  const tabNames = [];
+
+  for (let i = 0; i < meta.length; i++) {
+    if (meta[i] && meta[i].selected) {
+      let tabName = meta[i].changeName || meta[i].sheetName;
+      tabName = tabName.replace(/[*?/\\[\]]/gi, '');
+      sheetList.push(meta[i].sheetName);
+      tabNames.push(tabName);
+      totalSheets = totalSheets + 1;
+    }
+  }
+
+  const processSheet = async (metaSheet, idx) => {
+    const sheet = worksheets.find(s => s.name === metaSheet);
+    try {
+      const sheetData = await generateCrossTab(sheet);
+      const ws = XLSX.utils.aoa_to_sheet(sheetData);
+      const sheetname = tabNames[sheetCount];
+      XLSX.utils.book_append_sheet(wb, ws, sheetname);
+      sheetCount++;
+      if (sheetCount === totalSheets) {
+        resolve(wb);
+      }
+    } catch (error) {
+      console.error('Error processing sheet:', error);
+      reject(error);
+    }
+  };
+
+  sheetList.forEach(processSheet);
+});
+
+async function generateCrossTab(worksheet) {
+  const dataTable = await worksheet.getSummaryDataAsync();
+  const visualSpec = await worksheet.getVisualSpecificationAsync();
+
+  const rowFields = visualSpec.rowFields.map(f => f.name);
+  const columnFields = visualSpec.columnFields.map(f => f.name);
+  const measureField = visualSpec.marksSpecifications[0].encodings[0].field.name;
+
+  const tempDataMap = new Map();
+
+  dataTable.data.forEach(row => {
+    const rowKey = rowFields.map(field => row[dataTable.columns.findIndex(col => col.fieldName === field)]._formattedValue).join('|');
+    const colKey = columnFields.map(field => row[dataTable.columns.findIndex(col => col.fieldName === field)]._formattedValue).join('|');
+    const value = row[dataTable.columns.findIndex(col => col.fieldName === measureField)]._formattedValue;
+
+    if (!tempDataMap.has(rowKey)) {
+      tempDataMap.set(rowKey, new Map());
+    }
+    tempDataMap.get(rowKey).set(colKey, value);
+  });
+
+  const dataMap = new Map([...tempDataMap].reverse());
+
+  for (let [key, value] of dataMap) {
+    dataMap.set(key, new Map([...value].reverse()));
+  }
+
+  const uniqueColKeys = Array.from(new Set(dataTable.data.map(row =>
+    columnFields.map(field => row[dataTable.columns.findIndex(col => col.fieldName === field)]._formattedValue).join('|')
+  ))).reverse();
+
+  let sheetData = [];
+
+  // Create header rows
+  for (let index = 0; index < columnFields.length; index++) {
+    if (index === columnFields.length - 1) {
+      const lastHeaderRow = rowFields.concat(uniqueColKeys.map(key => key.split('|')[index]));
+      sheetData.push(lastHeaderRow);
+    } else {
+      const headerRow = new Array(rowFields.length).fill('').concat(uniqueColKeys.map(key => key.split('|')[index]));
+      sheetData.push(headerRow);
+    }
+  }
+
+  for (let [rowKey, rowData] of dataMap) {
+    let row = rowKey.split('|');
+    for (let colKey of uniqueColKeys) {
+      row.push(rowData.get(colKey) || '');
+    }
+    sheetData.push(row);
+  }
+
+  console.log(sheetData)
+
+  return sheetData;
+}
+
 export {
   initializeMeta,
   revalidateMeta,
   saveSettings,
   setSettings,
   exportToExcel,
+  downloadCrosstab,
 }

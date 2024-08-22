@@ -1,12 +1,12 @@
 import React, { useEffect } from 'react';
 import ExportBtn from './ExportBtn/ExportBtn';
-import { initializeMeta, revalidateMeta, saveSettings, setSettings, exportToExcel } from '../func/func';
+import { initializeMeta, revalidateMeta, saveSettings, setSettings, exportToExcel, downloadCrosstab } from '../func/func';
 import compareVersions from 'compare-versions';
 
 // Declare this so our linter knows that tableau is a global object
 /* global tableau */
 
-function Extension (props) {
+function Extension(props) {
 
   useEffect(() => {
     console.log('[Extension.js] Props Changed', props);
@@ -16,7 +16,7 @@ function Extension (props) {
     console.log('[Extension.js] useEffect');
     //console.log('[Extension.js] Initialise Extension', props);
     //Initialise Extension
-    tableau.extensions.initializeAsync({'configure': configure}).then(() => {
+    tableau.extensions.initializeAsync({ 'configure': configure }).then(() => {
 
       let metaVersion = tableau.extensions.settings.get('metaVersion');
 
@@ -50,7 +50,7 @@ function Extension (props) {
       let labelSettings = tableau.extensions.settings.get('buttonLabel');
 
       if (labelSettings && labelSettings != null) {
-        labelSettings = labelSettings.replace(/"/g,'');
+        labelSettings = labelSettings.replace(/"/g, '');
         console.log('[Extension.js] initializeAsync Existing Label Settings Found', labelSettings);
         props.updateLabel(labelSettings);
       }
@@ -81,7 +81,7 @@ function Extension (props) {
       console.log('[Extension.js] refreshSettings Existing Sheet Settings Found. Refreshing', JSON.stringify(existingSettings));
       revalidateMeta(existingSettings)
         .then(meta => {
-          console.log('[Extension.js] refreshSettings settings revalidated',JSON.stringify(meta));
+          console.log('[Extension.js] refreshSettings settings revalidated', JSON.stringify(meta));
           props.updateMeta(meta);
           props.disableButton(false);
         });
@@ -90,7 +90,7 @@ function Extension (props) {
     let labelSettings = tableau.extensions.settings.get('buttonLabel');
 
     if (labelSettings && labelSettings != null) {
-      labelSettings = labelSettings.replace(/"/g,'');
+      labelSettings = labelSettings.replace(/"/g, '');
       console.log('[Extension.js] refreshSettings Existing Label Settings Found', labelSettings);
       props.updateLabel(labelSettings);
     }
@@ -110,14 +110,14 @@ function Extension (props) {
     }
   }
 
-  function configure () {
+  function configure() {
     console.log('[Extension.js] Opening configure popup');
     const popupUrl = `${window.location.origin}/configure`;
     tableau.extensions.ui.displayDialogAsync(popupUrl, null, { height: 500, width: 500 }).then((closePayload) => {
       refreshSettings();
       console.log('[Extension.js] Config window closed', props)
     }).catch((error) => {
-      switch(error.errorCode) {
+      switch (error.errorCode) {
         case tableau.ErrorCodes.DialogClosedByUser:
           console.log('[Extension.js] Dialog was closed by user');
           refreshSettings();
@@ -131,24 +131,27 @@ function Extension (props) {
   function clickExportHandler() {
     let sheetSettings = tableau.extensions.settings.get('selectedSheets');
     const meta = JSON.parse(sheetSettings);
+    downloadCrosstab(meta, props.filename);
     if (tableau.extensions.environment.context === "server") {
-      exportToExcel(meta, 'server', props.filename);
+      // exportToExcel(meta, 'server', props.filename);
+      // downloadCrosstab(meta, props.filename);
     } else {
       console.log('[Extension.js] Tableau Version', tableau.extensions.environment.tableauVersion);
-      if (compareVersions.compare(tableau.extensions.environment.tableauVersion, '2019.4.0', '>=') ) {
-        exportToExcel(meta, 'desktop', props.filename);
+      if (compareVersions.compare(tableau.extensions.environment.tableauVersion, '2019.4.0', '>=')) {
+        // exportToExcel(meta, 'desktop', props.filename);
+        // downloadCrosstab(meta, props.filename);
       } else {
-        desktopExportHandler ();
+        desktopExportHandler();
       }
     }
   }
 
-  function desktopExportHandler () {
+  function desktopExportHandler() {
     const popupUrl = `${window.location.origin}/desktopexport`;
     tableau.extensions.ui.displayDialogAsync(popupUrl, '', { height: 350, width: 400 }).then((closePayload) => {
       console.log('[Extension.js] Export window closed')
     }).catch((error) => {
-      switch(error.errorCode) {
+      switch (error.errorCode) {
         case tableau.ErrorCodes.DialogClosedByUser:
           console.log('[Extension.js] Export window was closed by user');
           break;

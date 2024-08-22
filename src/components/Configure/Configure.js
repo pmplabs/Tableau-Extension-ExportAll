@@ -25,7 +25,7 @@ const logoBanner = {
 
 function Configure(props) {
   const [tab, switchTab] = useState(0);
-  const tabs = [ { content: 'Select Sheets'}, { content: 'Select Columns' }, { content: 'Configure' } ];
+  const tabs = [{ content: 'Select Sheets' }, { content: 'Select Columns' }, { content: 'Configure' }];
 
   useEffect(() => {
     console.log('[Configure.js] useEffect');
@@ -48,7 +48,7 @@ function Configure(props) {
       let labelSettings = tableau.extensions.settings.get('buttonLabel');
 
       if (labelSettings && labelSettings != null) {
-        labelSettings = labelSettings.replace(/"/g,'');
+        labelSettings = labelSettings.replace(/"/g, '');
         console.log('[Configure.js] initializeDialogAsync Existing Label Settings Found', labelSettings);
         props.updateLabel(labelSettings);
       }
@@ -109,10 +109,10 @@ function Configure(props) {
 
   function array_move(arr, old_index, new_index) {
     if (new_index >= arr.length) {
-        var k = new_index - arr.length + 1;
-        while (k--) {
-            arr.push(undefined);
-        }
+      var k = new_index - arr.length + 1;
+      while (k--) {
+        arr.push(undefined);
+      }
     }
     arr.splice(new_index, 0, arr.splice(old_index, 1)[0]);
     return arr;
@@ -194,22 +194,22 @@ function Configure(props) {
   }
 
   return (
-      <div>
-      <div style={logoBanner}><img style={{height:20}} src={logo} alt='The Information Lab'/></div>
+    <div>
+      <div style={logoBanner}><img style={{ height: 20 }} src={logo} alt='The Information Lab' /></div>
       <Tabs
         onTabChange={(index) => {
           switchTab(index);
         }}
         selectedTabIndex={tab}
         tabs={tabs}
-        ><div style={configBody}>
-          { tab === 0 ? <SelectSheets sheets={props.meta} selectSheet={selectSheetHandler} changeOrder={changeSheetOrderHandler} changeName={changeSheetNameHandler} /> : null }
-          { tab === 1 ? <SelectColumns sheets={props.meta} colSelect={selectColumnHandler} changeName={changeColumnNameHandler} changeOrder={changeColumnOrderHandler}/> : null }
-          { tab === 2 ? <ConfigureTab label={props.label} filename={props.filename} style={props.style} updateLabel={updateLabelHandler} updateButtonStyle={updateButtonStyleHandler} updateFilename={updateFilenameHandler}/> : null }
+      ><div style={configBody}>
+          {tab === 0 ? <SelectSheets sheets={props.meta} selectSheet={selectSheetHandler} changeOrder={changeSheetOrderHandler} changeName={changeSheetNameHandler} /> : null}
+          {tab === 1 ? <SelectColumns sheets={props.meta} colSelect={selectColumnHandler} changeName={changeColumnNameHandler} changeOrder={changeColumnOrderHandler} /> : null}
+          {tab === 2 ? <ConfigureTab label={props.label} filename={props.filename} style={props.style} updateLabel={updateLabelHandler} updateButtonStyle={updateButtonStyleHandler} updateFilename={updateFilenameHandler} /> : null}
         </div>
       </Tabs>
       <ActionButtons enableButton={props.enableSave} save={saveSettingsHandler} resetSettings={resetSettingsHandler} />
-      </div>
+    </div>
   );
 }
 
