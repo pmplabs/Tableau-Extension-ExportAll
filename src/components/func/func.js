@@ -1,5 +1,6 @@
-import XLSX from 'xlsx';
+// import { XLSX } from 'xlsx';
 import { saveAs } from 'file-saver';
+import XLSX from 'xlsx-js-style';
 
 // Declare this so our linter knows that tableau is a global object
 /* global tableau */
@@ -378,6 +379,24 @@ const buildCrosstabExcelBlob = (meta) => new Promise((resolve, reject) => {
     try {
       const sheetData = await generateCrossTab(sheet);
       const ws = XLSX.utils.aoa_to_sheet(sheetData);
+
+      // 列幅の設定
+      ws['!cols'] = sheetData[0].map(() => ({ wch: 15 }));
+
+      // 各セルにフォントスタイルを適用
+      for (let R = 0; R < sheetData.length; ++R) {
+        for (let C = 0; C < sheetData[R].length; ++C) {
+          const cellAddress = XLSX.utils.encode_cell({ r: R, c: C });
+          if (!ws[cellAddress]) ws[cellAddress] = {};
+          ws[cellAddress].s = {
+            font: {
+              name: 'Meiryo UI',
+              sz: 9
+            }
+          };
+        }
+      }
+
       const sheetname = tabNames[sheetCount];
       XLSX.utils.book_append_sheet(wb, ws, sheetname);
       sheetCount++;
@@ -406,7 +425,7 @@ async function generateCrossTab(worksheet) {
   dataTable.data.forEach(row => {
     const rowKey = rowFields.map(field => row[dataTable.columns.findIndex(col => col.fieldName === field)]._formattedValue).join('|');
     const colKey = columnFields.map(field => row[dataTable.columns.findIndex(col => col.fieldName === field)]._formattedValue).join('|');
-    const value = row[dataTable.columns.findIndex(col => col.fieldName === measureField)]._formattedValue;
+    const value = Math.round(row[dataTable.columns.findIndex(col => col.fieldName === measureField)].value);
 
     if (!tempDataMap.has(rowKey)) {
       tempDataMap.set(rowKey, new Map());
