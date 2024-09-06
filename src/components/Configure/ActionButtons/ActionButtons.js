@@ -22,8 +22,8 @@ function ActionButtons(props) {
     <div>
       <div style={version}>v{packageJson.version}</div>
       <div style={placeButtons}>
-        <Button kind={'outline'} style={{marginRight: 12}} onClick={props.resetSettings}>Reset</Button>
-        <Button kind={'primary'} style={{marginRight: 12}} disabled={!props.enableButton} onClick={props.save}>Save Changes</Button>
+        <Button kind={'outline'} style={{ marginRight: 12 }} onClick={props.resetSettings}>Reset</Button>
+        <Button kind={'primary'} style={{ marginRight: 12 }} disabled={!props.enableButton} onClick={props.save}>Save Changes</Button>
       </div>
     </div>
   )

@@ -425,7 +425,7 @@ async function generateCrossTab(worksheet) {
   dataTable.data.forEach(row => {
     const rowKey = rowFields.map(field => row[dataTable.columns.findIndex(col => col.fieldName === field)]._formattedValue).join('|');
     const colKey = columnFields.map(field => row[dataTable.columns.findIndex(col => col.fieldName === field)]._formattedValue).join('|');
-    const value = Math.round(row[dataTable.columns.findIndex(col => col.fieldName === measureField)].value);
+    const value = Math.round(Number(row[dataTable.columns.findIndex(col => col.fieldName === measureField)].value) * 100) / 100;
 
     if (!tempDataMap.has(rowKey)) {
       tempDataMap.set(rowKey, new Map());
