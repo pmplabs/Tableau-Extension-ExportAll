@@ -1,6 +1,7 @@
 // import { XLSX } from 'xlsx';
 import { saveAs } from 'file-saver';
 import XLSX from 'xlsx-js-style';
+import ExcelJS from 'exceljs';
 
 // Declare this so our linter knows that tableau is a global object
 /* global tableau */
