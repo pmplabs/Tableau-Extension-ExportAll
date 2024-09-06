@@ -75,6 +75,7 @@ const getSheetColumns = (sheet, existingCols, modified) => new Promise((resolve,
         col.index = columns[j].index;
         col.name = columns[j].fieldName;
         col.dataType = columns[j].dataType;
+        col.isImage = columns[j].isImage;
         col.changeName = null;
         col.selected = false;
         cols.push(col);
@@ -93,6 +94,7 @@ const getSheetColumns = (sheet, existingCols, modified) => new Promise((resolve,
         if (eIdx > -1) {
           ret.selected = existingCols[eIdx].selected;
           ret.changeName = existingCols[eIdx].changeName;
+          ret.isImage = existingCols[eIdx].isImage;
           ret.order = eIdx;
         } else {
           ret.order = maxPos;
@@ -106,6 +108,7 @@ const getSheetColumns = (sheet, existingCols, modified) => new Promise((resolve,
         newCol.index = columns[k].index;
         newCol.name = columns[k].fieldName;
         newCol.dataType = columns[k].dataType;
+        newCol.isImage = columns[k].isImage;
         newCol.selected = true;
         newCol.order = k + 1;
         cols.push(newCol);

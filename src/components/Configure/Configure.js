@@ -107,6 +107,15 @@ function Configure(props) {
     props.changeSettings(true);
   }
 
+  function toggleSheetIsImageHandler(sheetIdx, colIdx) {
+    console.log('[Configure.js] toggleSheetIsImageHandler', sheetIdx);
+    const meta = props.meta;
+    const sheet = meta[sheetIdx];
+    sheet.columns[colIdx].isImage = !sheet.columns[colIdx].isImage;
+    props.updateMeta(meta);
+    props.changeSettings(true);
+  }
+
   function array_move(arr, old_index, new_index) {
     if (new_index >= arr.length) {
       var k = new_index - arr.length + 1;
@@ -204,7 +213,13 @@ function Configure(props) {
         tabs={tabs}
       ><div style={configBody}>
           {tab === 0 ? <SelectSheets sheets={props.meta} selectSheet={selectSheetHandler} changeOrder={changeSheetOrderHandler} changeName={changeSheetNameHandler} /> : null}
-          {tab === 1 ? <SelectColumns sheets={props.meta} colSelect={selectColumnHandler} changeName={changeColumnNameHandler} changeOrder={changeColumnOrderHandler} /> : null}
+          {tab === 1 ? <SelectColumns
+            sheets={props.meta}
+            colSelect={selectColumnHandler}
+            changeName={changeColumnNameHandler}
+            changeOrder={changeColumnOrderHandler}
+            toggleIsImage={toggleSheetIsImageHandler}
+          /> : null}
           {tab === 2 ? <ConfigureTab label={props.label} filename={props.filename} style={props.style} updateLabel={updateLabelHandler} updateButtonStyle={updateButtonStyleHandler} updateFilename={updateFilenameHandler} /> : null}
         </div>
       </Tabs>

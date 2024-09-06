@@ -112,7 +112,8 @@ function Extension(props) {
 
   function configure() {
     console.log('[Extension.js] Opening configure popup');
-    const popupUrl = `${window.location.origin}/configure`;
+    const popupUrl = `${window.location.origin}/tableau-extension/configure/index.html`;
+    // const popupUrl = `${window.location.origin}/configure`;
     tableau.extensions.ui.displayDialogAsync(popupUrl, null, { height: 500, width: 500 }).then((closePayload) => {
       refreshSettings();
       console.log('[Extension.js] Config window closed', props)
