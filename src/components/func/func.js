@@ -345,19 +345,102 @@ const decodeRow = (columns, row) => new Promise((resolve, reject) => {
 
 
 
-const downloadCrosstab = (meta, filename) => new Promise((resolve, reject) => {
+const downloadCrosstab = async (meta, filename) => {
   console.log('[func.js] Downloading Crosstab');
   let xlsFile = "crosstab_export.xlsx";
   if (filename && filename.length > 0) {
     xlsFile = filename + ".xlsx";
   }
-  buildCrosstabExcelBlob(meta).then(wb => {
-    var wopts = { bookType: 'xlsx', bookSST: false, type: 'array', ignoreEC: false };
-    var wbout = XLSX.write(wb, wopts);
-    saveAs(new Blob([wbout], { type: "application/octet-stream" }), xlsFile);
-    resolve();
-  }).catch(reject);
-});
+
+  try {
+    const workbook = new ExcelJS.Workbook();
+    await buildCrosstabExcelWorkbook(workbook, meta);
+    const buffer = await workbook.xlsx.writeBuffer();
+    saveAs(new Blob([buffer], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" }), xlsFile);
+  } catch (error) {
+    console.error('Error generating Excel file:', error);
+  }
+};
+
+const buildCrosstabExcelWorkbook = async (workbook, meta) => {
+  console.log("[func.js] Got Meta for Crosstab", meta);
+  const worksheets = tableau.extensions.dashboardContent.dashboard.worksheets;
+
+  for (let i = 0; i < meta.length; i++) {
+    if (meta[i] && meta[i].selected) {
+      let tabName = meta[i].changeName || meta[i].sheetName;
+      tabName = tabName.replace(/[*?/\\[\]]/gi, '');
+      const sheet = worksheets.find(s => s.name === meta[i].sheetName);
+      if (sheet) {
+        await processSheet(workbook, sheet, tabName, meta[i]);
+      }
+    }
+  }
+};
+
+const processSheet = async (workbook, sheet, tabName, sheetMeta) => {
+  const worksheet = workbook.addWorksheet(tabName);
+  const sheetData = await generateCrossTab(sheet);
+
+  // ヘッダーの設定
+  worksheet.columns = sheetData[0].map((header, index) => ({
+    header,
+    key: `col${index}`,
+    width: 15
+  }));
+
+  // データの設定
+  for (let i = 1; i < sheetData.length; i++) {
+    const row = worksheet.addRow(sheetData[i]);
+    row.height = 90; // 画像を表示するために行の高さを設定
+
+    for (let j = 0; j < sheetData[i].length; j++) {
+      const cell = row.getCell(j + 1);
+      const columnMeta = sheetMeta.columns.find(col => col.name === sheetData[0][j]);
+
+      console.log(cell);
+      console.log(columnMeta);
+      console.log(columnMeta?.isImage);
+      if (columnMeta && columnMeta.isImage) {
+        try {
+          const imageUrl = sheetData[i][j];
+          const response = await fetch(imageUrl);
+          const blob = await response.blob();
+          const arrayBuffer = await blob.arrayBuffer();
+
+          const imageId = workbook.addImage({
+            buffer: arrayBuffer,
+            extension: 'jpeg',
+          });
+
+          worksheet.addImage(imageId, {
+            tl: { col: j, row: i },
+            ext: { width: 80, height: 80 },
+            editAs: 'oneCell'
+          });
+        } catch (error) {
+          console.error('Error fetching image:', error);
+          cell.value = 'Image Load Error';
+        }
+      } else {
+        cell.value = sheetData[i][j];
+      }
+
+      // スタイルの適用
+      cell.font = {
+        name: 'Meiryo UI',
+        size: 9
+      };
+    }
+  }
+
+  // ヘッダー行のスタイル
+  worksheet.getRow(1).fill = {
+    type: 'pattern',
+    pattern: 'solid',
+    fgColor: { argb: 'FFFFFF00' }
+  };
+};
 
 const buildCrosstabExcelBlob = (meta) => new Promise((resolve, reject) => {
   console.log("[func.js] Got Meta for Crosstab", meta);
