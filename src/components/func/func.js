@@ -389,6 +389,14 @@ const processSheet = async (workbook, sheet, tabName, sheetMeta) => {
     width: 15
   }));
 
+  // ヘッダー行のスタイル
+  const headerRow = worksheet.getRow(1);
+  headerRow.font = {
+    name: 'Meiryo UI',
+    size: 9,
+    bold: true
+  };
+
   // データの設定
   for (let i = 1; i < sheetData.length; i++) {
     const row = worksheet.addRow(sheetData[i]);
@@ -398,9 +406,6 @@ const processSheet = async (workbook, sheet, tabName, sheetMeta) => {
       const cell = row.getCell(j + 1);
       const columnMeta = sheetMeta.columns.find(col => col.name === sheetData[0][j]);
 
-      console.log(cell);
-      console.log(columnMeta);
-      console.log(columnMeta?.isImage);
       if (columnMeta && columnMeta.isImage) {
         try {
           const imageUrl = sheetData[i][j];
@@ -418,6 +423,7 @@ const processSheet = async (workbook, sheet, tabName, sheetMeta) => {
             ext: { width: 80, height: 80 },
             editAs: 'oneCell'
           });
+          cell.value = "";
         } catch (error) {
           console.error('Error fetching image:', error);
           cell.value = 'Image Load Error';
@@ -433,71 +439,17 @@ const processSheet = async (workbook, sheet, tabName, sheetMeta) => {
       };
     }
   }
-
-  // ヘッダー行のスタイル
-  worksheet.getRow(1).fill = {
-    type: 'pattern',
-    pattern: 'solid',
-    fgColor: { argb: 'FFFFFF00' }
-  };
 };
 
-const buildCrosstabExcelBlob = (meta) => new Promise((resolve, reject) => {
-  console.log("[func.js] Got Meta for Crosstab", meta);
-  const worksheets = tableau.extensions.dashboardContent.dashboard.worksheets;
-  const wb = XLSX.utils.book_new();
-  let totalSheets = 0;
-  let sheetCount = 0;
-  const sheetList = [];
-  const tabNames = [];
-
-  for (let i = 0; i < meta.length; i++) {
-    if (meta[i] && meta[i].selected) {
-      let tabName = meta[i].changeName || meta[i].sheetName;
-      tabName = tabName.replace(/[*?/\\[\]]/gi, '');
-      sheetList.push(meta[i].sheetName);
-      tabNames.push(tabName);
-      totalSheets = totalSheets + 1;
-    }
+const processValue = (value) => {
+  const originalValue = Number(value);
+  const roundedValue = Math.round(originalValue * 100) / 100;
+  if (Math.abs(roundedValue) < 0.01) {
+    return originalValue; // 小数第3位を四捨五入した結果が0の場合、元の値を返す
+  } else {
+    return roundedValue; // それ以外の場合は小数第2位まで四捨五入
   }
-
-  const processSheet = async (metaSheet, idx) => {
-    const sheet = worksheets.find(s => s.name === metaSheet);
-    try {
-      const sheetData = await generateCrossTab(sheet);
-      const ws = XLSX.utils.aoa_to_sheet(sheetData);
-
-      // 列幅の設定
-      ws['!cols'] = sheetData[0].map(() => ({ wch: 15 }));
-
-      // 各セルにフォントスタイルを適用
-      for (let R = 0; R < sheetData.length; ++R) {
-        for (let C = 0; C < sheetData[R].length; ++C) {
-          const cellAddress = XLSX.utils.encode_cell({ r: R, c: C });
-          if (!ws[cellAddress]) ws[cellAddress] = {};
-          ws[cellAddress].s = {
-            font: {
-              name: 'Meiryo UI',
-              sz: 9
-            }
-          };
-        }
-      }
-
-      const sheetname = tabNames[sheetCount];
-      XLSX.utils.book_append_sheet(wb, ws, sheetname);
-      sheetCount++;
-      if (sheetCount === totalSheets) {
-        resolve(wb);
-      }
-    } catch (error) {
-      console.error('Error processing sheet:', error);
-      reject(error);
-    }
-  };
-
-  sheetList.forEach(processSheet);
-});
+};
 
 async function generateCrossTab(worksheet) {
   const dataTable = await worksheet.getSummaryDataAsync();
@@ -507,12 +459,36 @@ async function generateCrossTab(worksheet) {
   const columnFields = visualSpec.columnFields.map(f => f.name);
   const measureField = visualSpec.marksSpecifications[0].encodings[0].field.name;
 
+  // console.log(visualSpec);
+  // console.log(visualSpec.marksSpecifications);
+
   const tempDataMap = new Map();
+
+  // console.log(dataTable);
+  // console.log(rowFields);
+  // console.log(columnFields);
+  // console.log(measureField);
 
   dataTable.data.forEach(row => {
     const rowKey = rowFields.map(field => row[dataTable.columns.findIndex(col => col.fieldName === field)]._formattedValue).join('|');
-    const colKey = columnFields.map(field => row[dataTable.columns.findIndex(col => col.fieldName === field)]._formattedValue).join('|');
-    const value = Math.round(Number(row[dataTable.columns.findIndex(col => col.fieldName === measureField)].value) * 100) / 100;
+    const colValue = columnFields.map(field => row[dataTable.columns.findIndex(col => col.fieldName === field)]._formattedValue)
+    const colKey = colValue.join('|');
+    let compareKey = "";
+
+    if (columnFields.length === 1 && columnFields[0] === "メジャー ネーム") {
+      compareKey = "メジャー バリュー";
+    } else {
+      compareKey = measureField
+    }
+
+    // console.log(`[func.js] row: `, JSON.stringify(row));
+    // console.log(compareKey);
+    const value = processValue(row[dataTable.columns.findIndex(col => col.fieldName === compareKey)].value);
+
+    // console.log(row[dataTable.columns.findIndex(col => col.fieldName === compareKey)]);
+    // console.log(`[func.js] rowKey: `, JSON.stringify(rowKey));
+    // console.log(`[func.js] colKey: `, JSON.stringify(colKey));
+    // console.log(`[func.js] value: `, JSON.stringify(value));
 
     if (!tempDataMap.has(rowKey)) {
       tempDataMap.set(rowKey, new Map());
@@ -521,6 +497,8 @@ async function generateCrossTab(worksheet) {
   });
 
   const dataMap = new Map([...tempDataMap].reverse());
+
+  // console.log(`[func.js] Data Map:`, JSON.stringify(dataMap));
 
   for (let [key, value] of dataMap) {
     dataMap.set(key, new Map([...value].reverse()));
